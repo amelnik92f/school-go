@@ -19,8 +19,8 @@ func setupTestService(t *testing.T) (*SchoolService, *sqlx.DB) {
 	db, err := sqlx.Connect("sqlite3", ":memory:")
 	require.NoError(t, err)
 
-	// Create schema with all fields
-	schema := `
+	// Create schools table
+	schoolsSchema := `
 		CREATE TABLE schools (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			school_number TEXT NOT NULL DEFAULT '',
@@ -44,12 +44,39 @@ func setupTestService(t *testing.T) (*SchoolService, *sqlx.DB) {
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 	`
-	_, err = db.Exec(schema)
+	_, err = db.Exec(schoolsSchema)
+	require.NoError(t, err)
+
+	// Create construction_projects table
+	constructionSchema := `
+		CREATE TABLE construction_projects (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			project_id INTEGER NOT NULL UNIQUE,
+			school_number TEXT NOT NULL,
+			school_name TEXT NOT NULL,
+			district TEXT DEFAULT '',
+			school_type TEXT DEFAULT '',
+			construction_measure TEXT DEFAULT '',
+			description TEXT DEFAULT '',
+			built_school_places TEXT DEFAULT '',
+			places_after_construction TEXT DEFAULT '',
+			class_tracks_after_construction TEXT DEFAULT '',
+			handover_date TEXT DEFAULT '',
+			total_costs TEXT DEFAULT '',
+			street TEXT DEFAULT '',
+			postal_code TEXT DEFAULT '',
+			city TEXT DEFAULT '',
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+	`
+	_, err = db.Exec(constructionSchema)
 	require.NoError(t, err)
 
 	repo := repository.NewSchoolRepository(db)
+	constructionRepo := repository.NewConstructionProjectRepository(db)
 	fetcher := fetcher.NewSchoolFetcher()
-	service := NewSchoolService(repo, fetcher)
+	service := NewSchoolService(repo, constructionRepo, fetcher)
 
 	return service, db
 }

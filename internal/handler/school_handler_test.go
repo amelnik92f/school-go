@@ -53,8 +53,9 @@ func setupTestHandler(t *testing.T) (*SchoolHandler, *sqlx.DB) {
 	require.NoError(t, err)
 
 	repo := repository.NewSchoolRepository(db)
+	constructionRepo := repository.NewConstructionProjectRepository(db)
 	fetcher := fetcher.NewSchoolFetcher()
-	svc := service.NewSchoolService(repo, fetcher)
+	svc := service.NewSchoolService(repo, constructionRepo, fetcher)
 	handler := NewSchoolHandler(svc)
 
 	return handler, db

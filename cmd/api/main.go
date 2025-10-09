@@ -55,12 +55,13 @@ func main() {
 
 	// Initialize repositories
 	schoolRepo := repository.NewSchoolRepository(db)
+	constructionRepo := repository.NewConstructionProjectRepository(db)
 
 	// Initialize fetchers
 	schoolFetcher := fetcher.NewSchoolFetcher()
 
 	// Initialize services
-	schoolService := service.NewSchoolService(schoolRepo, schoolFetcher)
+	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolFetcher)
 
 	// Initialize handlers
 	schoolHandler := handler.NewSchoolHandler(schoolService)

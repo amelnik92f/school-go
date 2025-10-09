@@ -16,7 +16,7 @@ const (
 	wfsBaseURL         = "https://gdi.berlin.de/services/wfs/schulen"
 	wfsVersion         = "2.0.0"
 	defaultTypenames   = "fis:schulen"
-	constructionAPIURL = "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/index.php/index/all.json"
+	constructionAPIURL = "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/index.php/index/all.json?q="
 )
 
 // SchoolFetcher fetches school data from external sources
@@ -234,7 +234,11 @@ func (f *SchoolFetcher) FetchConstructionProjects() (*ConstructionProjectsRespon
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", "application/json, text/plain, */*")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9,de;q=0.8")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Referer", "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/")
+	req.Header.Set("Cache-Control", "no-cache")
 
 	// Execute request
 	log.Println("Fetching construction projects from Berlin API...")

@@ -14,18 +14,17 @@ type School struct {
 }
 
 type CreateSchoolInput struct {
-	Name      string  `json:"name"`
-	Address   string  `json:"address"`
-	Type      string  `json:"type"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Name      string  `json:"name" validate:"required,min=1,max=200"`
+	Address   string  `json:"address" validate:"required,min=1,max=500"`
+	Type      string  `json:"type" validate:"required,min=1,max=100"`
+	Latitude  float64 `json:"latitude" validate:"required,latitude"`
+	Longitude float64 `json:"longitude" validate:"required,longitude"`
 }
 
 type UpdateSchoolInput struct {
-	Name      *string  `json:"name,omitempty"`
-	Address   *string  `json:"address,omitempty"`
-	Type      *string  `json:"type,omitempty"`
-	Latitude  *float64 `json:"latitude,omitempty"`
-	Longitude *float64 `json:"longitude,omitempty"`
+	Name      *string  `json:"name,omitempty" validate:"omitempty,min=1,max=200"`
+	Address   *string  `json:"address,omitempty" validate:"omitempty,min=1,max=500"`
+	Type      *string  `json:"type,omitempty" validate:"omitempty,min=1,max=100"`
+	Latitude  *float64 `json:"latitude,omitempty" validate:"omitempty,latitude"`
+	Longitude *float64 `json:"longitude,omitempty" validate:"omitempty,longitude"`
 }
-

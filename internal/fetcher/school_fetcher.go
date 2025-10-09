@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,9 +13,10 @@ import (
 )
 
 const (
-	wfsBaseURL       = "https://gdi.berlin.de/services/wfs/schulen"
-	wfsVersion       = "2.0.0"
-	defaultTypenames = "fis:schulen"
+	wfsBaseURL         = "https://gdi.berlin.de/services/wfs/schulen"
+	wfsVersion         = "2.0.0"
+	defaultTypenames   = "fis:schulen"
+	constructionAPIURL = "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/index.php/index/all.json?q="
 )
 
 // SchoolFetcher fetches school data from external sources
@@ -29,9 +31,16 @@ func NewSchoolFetcher() *SchoolFetcher {
 		typenames = defaultTypenames
 	}
 
+	// Create HTTP client with custom transport to disable HTTP/2 (force HTTP/1.1)
+	// This fixes issues with some Berlin APIs that don't handle HTTP/2 properly
+	transport := &http.Transport{
+		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	}
+
 	return &SchoolFetcher{
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout:   30 * time.Second,
+			Transport: transport,
 		},
 		typenames: typenames,
 	}
@@ -183,9 +192,74 @@ func (f *SchoolFetcher) FetchSchoolDetails(schoolID string) (*models.CreateSchoo
 	return nil, fmt.Errorf("not implemented")
 }
 
-// Add more fetcher methods for different data sources as needed
-// Example:
-// - FetchFromAPI1()
-// - FetchFromAPI2()
-// - FetchFromCSV()
-// - FetchFromWebsite()
+// Construction Projects API structures
+
+// ConstructionProject represents a single construction project from the Berlin API
+type ConstructionProject struct {
+	ID                           int    `json:"id"`
+	SchoolNumber                 string `json:"schulnummer"`                    // School number (BSN)
+	SchoolName                   string `json:"schulname"`                      // School name
+	District                     string `json:"bezirk"`                         // District
+	SchoolType                   string `json:"schulart"`                       // School type
+	ConstructionMeasure          string `json:"baumassnahme"`                   // Construction measure (e.g., "Sanierung; Erweiterung")
+	Description                  string `json:"beschreibung"`                   // Description of the construction
+	BuiltSchoolPlaces            string `json:"gebaute_schulplaetze"`           // Built school places
+	PlacesAfterConstruction      string `json:"schulplaetze_nach_baumassnahme"` // School places after construction
+	ClassTracksAfterConstruction string `json:"zuegigkeit_nach_baumassnahme"`   // Class tracks after construction
+	HandoverDate                 string `json:"nutzungsuebergabe"`              // Handover date (e.g., "2027/2028")
+	TotalCosts                   string `json:"gesamtkosten"`                   // Total costs
+	Street                       string `json:"strasse"`                        // Street
+	PostalCode                   string `json:"plz"`                            // Postal code
+	City                         string `json:"ort"`                            // City
+}
+
+// ConstructionProjectsResponse represents the full response from the construction API
+type ConstructionProjectsResponse struct {
+	Messages struct {
+		Messages []string `json:"messages"`
+		Success  bool     `json:"success"`
+	} `json:"messages"`
+	Results struct {
+		Count        int `json:"count"`
+		ItemsPerPage int `json:"items_per_page"`
+	} `json:"results"`
+	Index []ConstructionProject `json:"index"`
+}
+
+// FetchConstructionProjects fetches all construction projects from the Berlin school construction API
+func (f *SchoolFetcher) FetchConstructionProjects() (*ConstructionProjectsResponse, error) {
+	// Create HTTP request
+	req, err := http.NewRequest("GET", constructionAPIURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	// Execute request
+	log.Println("Fetching construction projects from Berlin API...")
+	resp, err := f.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch construction projects: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch construction projects: %d %s", resp.StatusCode, resp.Status)
+	}
+
+	// Parse JSON response
+	var data ConstructionProjectsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	// Validate response structure
+	if data.Index == nil {
+		return nil, fmt.Errorf("invalid response format: missing index array")
+	}
+
+	log.Printf("Successfully fetched %d construction projects", len(data.Index))
+	return &data, nil
+}

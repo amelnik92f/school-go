@@ -24,13 +24,25 @@ func setupTestHandler(t *testing.T) (*SchoolHandler, *sqlx.DB) {
 	db, err := sqlx.Connect("sqlite3", ":memory:")
 	require.NoError(t, err)
 
-	// Create schema
+	// Create schema with all fields
 	schema := `
 		CREATE TABLE schools (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL DEFAULT '',
 			name TEXT NOT NULL,
-			address TEXT,
-			type TEXT,
+			school_type TEXT NOT NULL DEFAULT '',
+			operator TEXT DEFAULT '',
+			school_category TEXT DEFAULT '',
+			district TEXT DEFAULT '',
+			neighborhood TEXT DEFAULT '',
+			postal_code TEXT DEFAULT '',
+			street TEXT DEFAULT '',
+			house_number TEXT DEFAULT '',
+			phone TEXT DEFAULT '',
+			fax TEXT DEFAULT '',
+			email TEXT DEFAULT '',
+			website TEXT DEFAULT '',
+			school_year TEXT DEFAULT '',
 			latitude REAL,
 			longitude REAL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -56,11 +68,12 @@ func TestSchoolHandler_GetSchools(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewSchoolRepository(db)
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	_, err := repo.Create(ctx, input)
 	require.NoError(t, err)
@@ -89,21 +102,23 @@ func TestSchoolHandler_GetSchools_WithTypeFilter(t *testing.T) {
 	repo := repository.NewSchoolRepository(db)
 
 	gymnasium := models.CreateSchoolInput{
-		Name:      "Gymnasium",
-		Address:   "Gym St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Gymnasium",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	_, err := repo.Create(ctx, gymnasium)
 	require.NoError(t, err)
 
 	grundschule := models.CreateSchoolInput{
-		Name:      "Grundschule",
-		Address:   "Grund St",
-		Type:      "Grundschule",
-		Latitude:  52.5167,
-		Longitude: 13.3833,
+		SchoolNumber: "01B02",
+		Name:         "Grundschule",
+		SchoolType:   "Grundschule",
+		District:     "Mitte",
+		Latitude:     52.5167,
+		Longitude:    13.3833,
 	}
 	_, err = repo.Create(ctx, grundschule)
 	require.NoError(t, err)
@@ -131,11 +146,12 @@ func TestSchoolHandler_GetSchool(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewSchoolRepository(db)
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	school, err := repo.Create(ctx, input)
 	require.NoError(t, err)
@@ -199,11 +215,12 @@ func TestSchoolHandler_CreateSchool(t *testing.T) {
 	defer db.Close()
 
 	input := models.CreateSchoolInput{
-		Name:      "New School",
-		Address:   "456 New St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "New School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 
 	body, err := json.Marshal(input)
@@ -266,11 +283,12 @@ func TestSchoolHandler_UpdateSchool(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewSchoolRepository(db)
 	input := models.CreateSchoolInput{
-		Name:      "Original Name",
-		Address:   "Original Address",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Original Name",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	school, err := repo.Create(ctx, input)
 	require.NoError(t, err)
@@ -338,11 +356,12 @@ func TestSchoolHandler_DeleteSchool(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewSchoolRepository(db)
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	_, err := repo.Create(ctx, input)
 	require.NoError(t, err)

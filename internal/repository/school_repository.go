@@ -48,7 +48,7 @@ func (r *SchoolRepository) GetByID(ctx context.Context, id int64) (*models.Schoo
 
 func (r *SchoolRepository) GetByType(ctx context.Context, schoolType string) ([]models.School, error) {
 	var schools []models.School
-	query := `SELECT * FROM schools WHERE type = ? ORDER BY name`
+	query := `SELECT * FROM schools WHERE school_type = ? ORDER BY name`
 
 	err := r.db.SelectContext(ctx, &schools, query, schoolType)
 	if err != nil {
@@ -60,12 +60,20 @@ func (r *SchoolRepository) GetByType(ctx context.Context, schoolType string) ([]
 
 func (r *SchoolRepository) Create(ctx context.Context, input models.CreateSchoolInput) (*models.School, error) {
 	query := `
-		INSERT INTO schools (name, address, type, latitude, longitude, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO schools (
+			school_number, name, school_type, operator, school_category,
+			district, neighborhood, postal_code, street, house_number,
+			phone, fax, email, website, school_year,
+			latitude, longitude, created_at, updated_at
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	now := time.Now()
-	result, err := r.db.ExecContext(ctx, query, input.Name, input.Address, input.Type,
+	result, err := r.db.ExecContext(ctx, query,
+		input.SchoolNumber, input.Name, input.SchoolType, input.Operator, input.SchoolCategory,
+		input.District, input.Neighborhood, input.PostalCode, input.Street, input.HouseNumber,
+		input.Phone, input.Fax, input.Email, input.Website, input.SchoolYear,
 		input.Latitude, input.Longitude, now, now)
 	if err != nil {
 		return nil, errors.NewDatabaseError("create school", err)
@@ -84,17 +92,65 @@ func (r *SchoolRepository) Update(ctx context.Context, id int64, input models.Up
 	query := `UPDATE schools SET updated_at = ?`
 	args := []interface{}{time.Now()}
 
+	if input.SchoolNumber != nil {
+		query += `, school_number = ?`
+		args = append(args, *input.SchoolNumber)
+	}
 	if input.Name != nil {
 		query += `, name = ?`
 		args = append(args, *input.Name)
 	}
-	if input.Address != nil {
-		query += `, address = ?`
-		args = append(args, *input.Address)
+	if input.SchoolType != nil {
+		query += `, school_type = ?`
+		args = append(args, *input.SchoolType)
 	}
-	if input.Type != nil {
-		query += `, type = ?`
-		args = append(args, *input.Type)
+	if input.Operator != nil {
+		query += `, operator = ?`
+		args = append(args, *input.Operator)
+	}
+	if input.SchoolCategory != nil {
+		query += `, school_category = ?`
+		args = append(args, *input.SchoolCategory)
+	}
+	if input.District != nil {
+		query += `, district = ?`
+		args = append(args, *input.District)
+	}
+	if input.Neighborhood != nil {
+		query += `, neighborhood = ?`
+		args = append(args, *input.Neighborhood)
+	}
+	if input.PostalCode != nil {
+		query += `, postal_code = ?`
+		args = append(args, *input.PostalCode)
+	}
+	if input.Street != nil {
+		query += `, street = ?`
+		args = append(args, *input.Street)
+	}
+	if input.HouseNumber != nil {
+		query += `, house_number = ?`
+		args = append(args, *input.HouseNumber)
+	}
+	if input.Phone != nil {
+		query += `, phone = ?`
+		args = append(args, *input.Phone)
+	}
+	if input.Fax != nil {
+		query += `, fax = ?`
+		args = append(args, *input.Fax)
+	}
+	if input.Email != nil {
+		query += `, email = ?`
+		args = append(args, *input.Email)
+	}
+	if input.Website != nil {
+		query += `, website = ?`
+		args = append(args, *input.Website)
+	}
+	if input.SchoolYear != nil {
+		query += `, school_year = ?`
+		args = append(args, *input.SchoolYear)
 	}
 	if input.Latitude != nil {
 		query += `, latitude = ?`

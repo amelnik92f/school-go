@@ -19,13 +19,25 @@ func setupTestService(t *testing.T) (*SchoolService, *sqlx.DB) {
 	db, err := sqlx.Connect("sqlite3", ":memory:")
 	require.NoError(t, err)
 
-	// Create schema
+	// Create schema with all fields
 	schema := `
 		CREATE TABLE schools (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL DEFAULT '',
 			name TEXT NOT NULL,
-			address TEXT,
-			type TEXT,
+			school_type TEXT NOT NULL DEFAULT '',
+			operator TEXT DEFAULT '',
+			school_category TEXT DEFAULT '',
+			district TEXT DEFAULT '',
+			neighborhood TEXT DEFAULT '',
+			postal_code TEXT DEFAULT '',
+			street TEXT DEFAULT '',
+			house_number TEXT DEFAULT '',
+			phone TEXT DEFAULT '',
+			fax TEXT DEFAULT '',
+			email TEXT DEFAULT '',
+			website TEXT DEFAULT '',
+			school_year TEXT DEFAULT '',
 			latitude REAL,
 			longitude REAL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -48,11 +60,12 @@ func TestSchoolService_CreateSchool(t *testing.T) {
 
 	ctx := context.Background()
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 
 	school, err := service.CreateSchool(ctx, input)
@@ -69,11 +82,12 @@ func TestSchoolService_GetSchoolByID(t *testing.T) {
 
 	// Create a school
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	created, err := service.CreateSchool(ctx, input)
 	require.NoError(t, err)
@@ -104,11 +118,12 @@ func TestSchoolService_GetAllSchools(t *testing.T) {
 	// Create schools
 	for i := 1; i <= 3; i++ {
 		input := models.CreateSchoolInput{
-			Name:      "Test School",
-			Address:   "Address",
-			Type:      "Gymnasium",
-			Latitude:  52.5200,
-			Longitude: 13.4050,
+			SchoolNumber: "01B0" + string(rune('0'+i)),
+			Name:         "Test School",
+			SchoolType:   "Gymnasium",
+			District:     "Mitte",
+			Latitude:     52.5200,
+			Longitude:    13.4050,
 		}
 		_, err := service.CreateSchool(ctx, input)
 		require.NoError(t, err)
@@ -128,21 +143,23 @@ func TestSchoolService_GetSchoolsByType(t *testing.T) {
 
 	// Create schools of different types
 	gymnasium := models.CreateSchoolInput{
-		Name:      "Gymnasium",
-		Address:   "Gym St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Gymnasium",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	_, err := service.CreateSchool(ctx, gymnasium)
 	require.NoError(t, err)
 
 	grundschule := models.CreateSchoolInput{
-		Name:      "Grundschule",
-		Address:   "Grund St",
-		Type:      "Grundschule",
-		Latitude:  52.5167,
-		Longitude: 13.3833,
+		SchoolNumber: "01B02",
+		Name:         "Grundschule",
+		SchoolType:   "Grundschule",
+		District:     "Mitte",
+		Latitude:     52.5167,
+		Longitude:    13.3833,
 	}
 	_, err = service.CreateSchool(ctx, grundschule)
 	require.NoError(t, err)
@@ -165,11 +182,12 @@ func TestSchoolService_UpdateSchool(t *testing.T) {
 
 	// Create a school
 	input := models.CreateSchoolInput{
-		Name:      "Original Name",
-		Address:   "Original Address",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Original Name",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	created, err := service.CreateSchool(ctx, input)
 	require.NoError(t, err)
@@ -183,7 +201,7 @@ func TestSchoolService_UpdateSchool(t *testing.T) {
 	updated, err := service.UpdateSchool(ctx, created.ID, updateInput)
 	require.NoError(t, err)
 	assert.Equal(t, newName, updated.Name)
-	assert.Equal(t, created.Address, updated.Address) // Unchanged
+	assert.Equal(t, created.District, updated.District) // Unchanged
 
 	// Try to update non-existent school
 	_, err = service.UpdateSchool(ctx, 99999, updateInput)
@@ -199,11 +217,12 @@ func TestSchoolService_DeleteSchool(t *testing.T) {
 
 	// Create a school
 	input := models.CreateSchoolInput{
-		Name:      "Test School",
-		Address:   "123 Test St",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Test School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	created, err := service.CreateSchool(ctx, input)
 	require.NoError(t, err)
@@ -231,11 +250,12 @@ func TestSchoolService_RefreshSchoolsData(t *testing.T) {
 
 	// Create some existing schools
 	input := models.CreateSchoolInput{
-		Name:      "Old School",
-		Address:   "Old Address",
-		Type:      "Gymnasium",
-		Latitude:  52.5200,
-		Longitude: 13.4050,
+		SchoolNumber: "01B01",
+		Name:         "Old School",
+		SchoolType:   "Gymnasium",
+		District:     "Mitte",
+		Latitude:     52.5200,
+		Longitude:    13.4050,
 	}
 	_, err := service.CreateSchool(ctx, input)
 	require.NoError(t, err)
@@ -247,6 +267,6 @@ func TestSchoolService_RefreshSchoolsData(t *testing.T) {
 	// Verify new data is there
 	schools, err := service.GetAllSchools(ctx)
 	require.NoError(t, err)
-	// The fetcher has 2 example schools
-	assert.Len(t, schools, 2)
+	// The fetcher fetches real schools from Berlin WFS service
+	assert.Greater(t, len(schools), 0, "Should have fetched schools from WFS service")
 }

@@ -2,18 +2,21 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	apperrors "schools-be/internal/errors"
 	"schools-be/internal/fetcher"
 	"schools-be/internal/models"
 	"schools-be/internal/repository"
+	"schools-be/internal/utils"
 )
 
 type SchoolService struct {
 	repo             *repository.SchoolRepository
 	constructionRepo *repository.ConstructionProjectRepository
 	fetcher          *fetcher.SchoolFetcher
+	geocoder         *utils.Geocoder
 	logger           *slog.Logger
 }
 
@@ -22,6 +25,7 @@ func NewSchoolService(repo *repository.SchoolRepository, constructionRepo *repos
 		repo:             repo,
 		constructionRepo: constructionRepo,
 		fetcher:          fetcher,
+		geocoder:         utils.NewGeocoder(),
 		logger:           slog.Default(),
 	}
 }
@@ -147,9 +151,60 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 		return apperrors.NewDatabaseError("fetch construction projects", err)
 	}
 
-	// Convert to CreateConstructionProjectInput
-	projects := make([]models.CreateConstructionProjectInput, 0, len(response.Index))
+	// Separate projects into those with and without school numbers
+	projectsWithSchools := 0
+	standaloneProjects := 0
 	for _, proj := range response.Index {
+		if proj.SchoolNumber != "" {
+			projectsWithSchools++
+		} else {
+			standaloneProjects++
+		}
+	}
+
+	s.logger.Info("processing construction projects",
+		slog.Int("total", len(response.Index)),
+		slog.Int("with_school_number", projectsWithSchools),
+		slog.Int("standalone_to_geocode", standaloneProjects),
+	)
+
+	// Convert to CreateConstructionProjectInput and geocode only standalone projects
+	projects := make([]models.CreateConstructionProjectInput, 0, len(response.Index))
+	geocodedCount := 0
+	skippedCount := 0
+
+	for _, proj := range response.Index {
+		var lat, lon float64
+
+		// Only geocode projects without a school number (standalone projects)
+		if proj.SchoolNumber == "" || proj.SchoolNumber == " " {
+			// Build address string for geocoding
+			address := fmt.Sprintf("%s, %s %s", proj.Street, proj.PostalCode, proj.City)
+
+			// Geocode the address
+			coords := s.geocoder.GeocodeAddressSafe(address)
+
+			if coords != nil {
+				lat = coords.Latitude
+				lon = coords.Longitude
+				geocodedCount++
+				s.logger.Debug("geocoded standalone construction project",
+					slog.Int("project_id", proj.ID),
+					slog.String("address", address),
+					slog.Float64("lat", lat),
+					slog.Float64("lon", lon),
+				)
+			} else {
+				s.logger.Warn("failed to geocode construction project",
+					slog.Int("project_id", proj.ID),
+					slog.String("address", address),
+				)
+			}
+		} else {
+			// Skip geocoding for projects with school numbers
+			skippedCount++
+		}
+
 		project := models.CreateConstructionProjectInput{
 			ProjectID:                    proj.ID,
 			SchoolNumber:                 proj.SchoolNumber,
@@ -166,9 +221,26 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 			Street:                       proj.Street,
 			PostalCode:                   proj.PostalCode,
 			City:                         proj.City,
+			Latitude:                     lat,
+			Longitude:                    lon,
 		}
 		projects = append(projects, project)
+
+		// Log progress every 10 geocoding operations (not every project)
+		if standaloneProjects > 0 && geocodedCount > 0 && geocodedCount%10 == 0 {
+			s.logger.Info("geocoding progress",
+				slog.Int("geocoded", geocodedCount),
+				slog.Int("standalone_total", standaloneProjects),
+			)
+		}
 	}
+
+	s.logger.Info("construction projects processing completed",
+		slog.Int("total_projects", len(response.Index)),
+		slog.Int("skipped_with_school_number", skippedCount),
+		slog.Int("standalone_geocoded", geocodedCount),
+		slog.Int("standalone_failed", standaloneProjects-geocodedCount),
+	)
 
 	// Clear existing data
 	if err := s.constructionRepo.DeleteAll(ctx); err != nil {
@@ -200,5 +272,11 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 // RefreshSchoolsData is deprecated, use FetchAndStoreSchools instead
 // This is kept for backward compatibility with scheduler
 func (s *SchoolService) RefreshSchoolsData(ctx context.Context) error {
-	return s.FetchAndStoreSchools(ctx)
+	if err := s.FetchAndStoreSchools(ctx); err != nil {
+		return err
+	}
+	if err := s.FetchAndStoreConstructionProjects(ctx); err != nil {
+		return err
+	}
+	return nil
 }

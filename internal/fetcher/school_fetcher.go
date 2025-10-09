@@ -16,7 +16,7 @@ const (
 	wfsBaseURL         = "https://gdi.berlin.de/services/wfs/schulen"
 	wfsVersion         = "2.0.0"
 	defaultTypenames   = "fis:schulen"
-	constructionAPIURL = "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/index.php/index/all.json?q="
+	constructionAPIURL = "https://www.berlin.de/sen/bildung/schule/bauen-und-sanieren/schulbaukarte/index.php/index/all.json"
 )
 
 // SchoolFetcher fetches school data from external sources

@@ -66,6 +66,8 @@ func setupTestService(t *testing.T) (*SchoolService, *sqlx.DB) {
 			street TEXT DEFAULT '',
 			postal_code TEXT DEFAULT '',
 			city TEXT DEFAULT '',
+			latitude REAL,
+			longitude REAL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);

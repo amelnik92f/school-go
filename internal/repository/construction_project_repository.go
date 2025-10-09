@@ -25,16 +25,16 @@ func (r *ConstructionProjectRepository) Create(ctx context.Context, input models
 			project_id, school_number, school_name, district, school_type,
 			construction_measure, description, built_school_places, places_after_construction,
 			class_tracks_after_construction, handover_date, total_costs, street,
-			postal_code, city, created_at, updated_at
+			postal_code, city, latitude, longitude, created_at, updated_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	now := time.Now()
 	result, err := r.db.ExecContext(ctx, query,
 		input.ProjectID, input.SchoolNumber, input.SchoolName, input.District, input.SchoolType,
 		input.ConstructionMeasure, input.Description, input.BuiltSchoolPlaces, input.PlacesAfterConstruction,
 		input.ClassTracksAfterConstruction, input.HandoverDate, input.TotalCosts, input.Street,
-		input.PostalCode, input.City, now, now)
+		input.PostalCode, input.City, input.Latitude, input.Longitude, now, now)
 	if err != nil {
 		return nil, errors.NewDatabaseError("create construction project", err)
 	}

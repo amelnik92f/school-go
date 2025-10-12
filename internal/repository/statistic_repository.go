@@ -86,9 +86,10 @@ func (r *StatisticRepository) Create(ctx context.Context, data models.StatisticD
 	query := `
 		INSERT INTO school_statistics (
 			school_number, school_name, district, school_type, school_year,
-			students, teachers, classes, metadata, scraped_at
+			students, students_male, students_female, teachers, teachers_male, teachers_female,
+			classes, metadata, scraped_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	result, err := r.db.ExecContext(ctx, query,
@@ -98,7 +99,11 @@ func (r *StatisticRepository) Create(ctx context.Context, data models.StatisticD
 		data.SchoolType,
 		data.SchoolYear,
 		data.Students,
+		data.StudentsMale,
+		data.StudentsFemale,
 		data.Teachers,
+		data.TeachersMale,
+		data.TeachersFemale,
 		data.Classes,
 		string(metadataJSON),
 		data.ScrapedAt,
@@ -126,15 +131,20 @@ func (r *StatisticRepository) CreateOrUpdate(ctx context.Context, data models.St
 	query := `
 		INSERT INTO school_statistics (
 			school_number, school_name, district, school_type, school_year,
-			students, teachers, classes, metadata, scraped_at
+			students, students_male, students_female, teachers, teachers_male, teachers_female,
+			classes, metadata, scraped_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(school_number, school_year) DO UPDATE SET
 			school_name = excluded.school_name,
 			district = excluded.district,
 			school_type = excluded.school_type,
 			students = excluded.students,
+			students_male = excluded.students_male,
+			students_female = excluded.students_female,
 			teachers = excluded.teachers,
+			teachers_male = excluded.teachers_male,
+			teachers_female = excluded.teachers_female,
 			classes = excluded.classes,
 			metadata = excluded.metadata,
 			scraped_at = excluded.scraped_at
@@ -147,7 +157,11 @@ func (r *StatisticRepository) CreateOrUpdate(ctx context.Context, data models.St
 		data.SchoolType,
 		data.SchoolYear,
 		data.Students,
+		data.StudentsMale,
+		data.StudentsFemale,
 		data.Teachers,
+		data.TeachersMale,
+		data.TeachersFemale,
 		data.Classes,
 		string(metadataJSON),
 		data.ScrapedAt,
@@ -170,15 +184,20 @@ func (r *StatisticRepository) BulkCreateOrUpdate(ctx context.Context, statistics
 	stmt, err := tx.PreparexContext(ctx, `
 		INSERT INTO school_statistics (
 			school_number, school_name, district, school_type, school_year,
-			students, teachers, classes, metadata, scraped_at
+			students, students_male, students_female, teachers, teachers_male, teachers_female,
+			classes, metadata, scraped_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(school_number, school_year) DO UPDATE SET
 			school_name = excluded.school_name,
 			district = excluded.district,
 			school_type = excluded.school_type,
 			students = excluded.students,
+			students_male = excluded.students_male,
+			students_female = excluded.students_female,
 			teachers = excluded.teachers,
+			teachers_male = excluded.teachers_male,
+			teachers_female = excluded.teachers_female,
 			classes = excluded.classes,
 			metadata = excluded.metadata,
 			scraped_at = excluded.scraped_at
@@ -203,7 +222,11 @@ func (r *StatisticRepository) BulkCreateOrUpdate(ctx context.Context, statistics
 			data.SchoolType,
 			data.SchoolYear,
 			data.Students,
+			data.StudentsMale,
+			data.StudentsFemale,
 			data.Teachers,
+			data.TeachersMale,
+			data.TeachersFemale,
 			data.Classes,
 			string(metadataJSON),
 			data.ScrapedAt,

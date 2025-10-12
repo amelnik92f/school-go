@@ -156,8 +156,16 @@ func (s *StatisticsScraper) setupCallbacks() {
 						stat.SchoolYear = value
 					case strings.Contains(header, "schüler (m/w/d)") || strings.Contains(header, "schueler (m/w/d)"):
 						stat.Students = value
+					case strings.Contains(header, "schüler (w)") || strings.Contains(header, "schueler (w)"):
+						stat.StudentsFemale = value
+					case strings.Contains(header, "schüler (m)") || strings.Contains(header, "schueler (m)"):
+						stat.StudentsMale = value
 					case strings.Contains(header, "lehrkräfte (m,w,d)") || strings.Contains(header, "lehrkraefte (m,w,d)"):
 						stat.Teachers = value
+					case strings.Contains(header, "lehrkräfte (w)") || strings.Contains(header, "lehrkraefte (w)"):
+						stat.TeachersFemale = value
+					case strings.Contains(header, "lehrkräfte (m)") || strings.Contains(header, "lehrkraefte (m)"):
+						stat.TeachersMale = value
 					case header == "bezirk", header == "district":
 						stat.District = value
 					case header == "schulart", header == "school type":

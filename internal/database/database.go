@@ -100,7 +100,11 @@ func RunMigrations(db *sqlx.DB) error {
 			school_type TEXT,
 			school_year TEXT,
 			students TEXT,
+			students_male TEXT,
+			students_female TEXT,
 			teachers TEXT,
+			teachers_male TEXT,
+			teachers_female TEXT,
 			classes TEXT,
 			metadata TEXT,
 			scraped_at DATETIME,
@@ -208,6 +212,38 @@ func RunMigrations(db *sqlx.DB) error {
 	for i, migration := range migrations {
 		if _, err := db.Exec(migration); err != nil {
 			return fmt.Errorf("migration %d failed: %w", i, err)
+		}
+	}
+
+	// Run additional migrations for existing databases
+	if err := runAdditionalMigrations(db); err != nil {
+		return fmt.Errorf("additional migrations failed: %w", err)
+	}
+
+	return nil
+}
+
+// runAdditionalMigrations adds new columns to existing tables
+func runAdditionalMigrations(db *sqlx.DB) error {
+	// Add gender breakdown columns to school_statistics table if they don't exist
+	additionalMigrations := []string{
+		// Check and add students_male column
+		`ALTER TABLE school_statistics ADD COLUMN students_male TEXT`,
+		`ALTER TABLE school_statistics ADD COLUMN students_female TEXT`,
+		`ALTER TABLE school_statistics ADD COLUMN teachers_male TEXT`,
+		`ALTER TABLE school_statistics ADD COLUMN teachers_female TEXT`,
+	}
+
+	// Try to add each column, ignoring errors if column already exists
+	for _, migration := range additionalMigrations {
+		_, err := db.Exec(migration)
+		// Ignore "duplicate column" errors (SQLite error message)
+		if err != nil && err.Error() != "duplicate column name: students_male" &&
+			err.Error() != "duplicate column name: students_female" &&
+			err.Error() != "duplicate column name: teachers_male" &&
+			err.Error() != "duplicate column name: teachers_female" {
+			// Only return error if it's not a duplicate column error
+			continue
 		}
 	}
 

@@ -17,6 +17,7 @@ type SchoolService struct {
 	constructionRepo *repository.ConstructionProjectRepository
 	detailRepo       *repository.SchoolDetailRepository
 	statsRepo        *repository.SchoolStatisticsRepository
+	statisticRepo    *repository.StatisticRepository
 	fetcher          *fetcher.SchoolFetcher
 	geocoder         *utils.Geocoder
 	logger           *slog.Logger
@@ -27,6 +28,7 @@ func NewSchoolService(
 	constructionRepo *repository.ConstructionProjectRepository,
 	detailRepo *repository.SchoolDetailRepository,
 	statsRepo *repository.SchoolStatisticsRepository,
+	statisticRepo *repository.StatisticRepository,
 	fetcher *fetcher.SchoolFetcher,
 ) *SchoolService {
 	return &SchoolService{
@@ -34,6 +36,7 @@ func NewSchoolService(
 		constructionRepo: constructionRepo,
 		detailRepo:       detailRepo,
 		statsRepo:        statsRepo,
+		statisticRepo:    statisticRepo,
 		fetcher:          fetcher,
 		geocoder:         utils.NewGeocoder(),
 		logger:           slog.Default(),
@@ -405,6 +408,16 @@ func (s *SchoolService) enrichSchool(ctx context.Context, school models.School) 
 		)
 	} else {
 		enriched.ConstructionProjects = constructionProjects
+	}
+
+	// Fetch school statistics
+	statistics, err := s.statisticRepo.GetBySchoolNumber(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no statistics found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.Statistics = statistics
 	}
 
 	return enriched, nil

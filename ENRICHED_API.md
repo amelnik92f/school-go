@@ -10,6 +10,7 @@ The enriched schools API endpoints provide complete school data by combining inf
 - **Language statistics**: Non-German heritage language speakers
 - **Residence statistics**: Student residence distribution by district
 - **Absence statistics**: Absence and unexcused absence rates
+- **School statistics**: Historical data on students, teachers, and classes by school year
 - **Construction projects**: Related construction/renovation projects
 
 ## Endpoints
@@ -145,6 +146,36 @@ curl http://localhost:8080/api/v1/schools/42
     "scraped_at": "2025-01-15T12:00:00Z",
     "created_at": "2025-01-15T12:00:00Z"
   },
+  "statistics": [
+    {
+      "id": 1,
+      "school_number": "01G01",
+      "school_name": "Example Gymnasium",
+      "district": "Mitte",
+      "school_type": "Gymnasium",
+      "school_year": "2024/25",
+      "students": "512",
+      "teachers": "45",
+      "classes": "24",
+      "metadata": "{}",
+      "scraped_at": "2025-01-15T12:00:00Z",
+      "created_at": "2025-01-15T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "school_number": "01G01",
+      "school_name": "Example Gymnasium",
+      "district": "Mitte",
+      "school_type": "Gymnasium",
+      "school_year": "2023/24",
+      "students": "498",
+      "teachers": "43",
+      "classes": "23",
+      "metadata": "{}",
+      "scraped_at": "2025-01-15T12:00:00Z",
+      "created_at": "2025-01-15T12:00:00Z"
+    }
+  ],
   "construction_projects": [
     {
       "id": 1,

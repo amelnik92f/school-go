@@ -14,6 +14,9 @@ type EnrichedSchool struct {
 	ResidenceStats   []SchoolResidenceStat   `json:"residence_stats,omitempty"`
 	AbsenceStat      *SchoolAbsenceStat      `json:"absence_stat,omitempty"`
 
+	// School statistics (students, teachers, classes by year)
+	Statistics []SchoolStatistic `json:"statistics,omitempty"`
+
 	// Construction projects related to this school
 	ConstructionProjects []ConstructionProject `json:"construction_projects,omitempty"`
 }

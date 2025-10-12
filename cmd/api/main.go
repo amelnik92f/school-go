@@ -66,7 +66,7 @@ func main() {
 	statisticsScraper := scraper.NewStatisticsScraper()
 
 	// Initialize services
-	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolDetailRepo, schoolStatsRepo, schoolFetcher)
+	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolDetailRepo, schoolStatsRepo, statisticRepo, schoolFetcher)
 	statisticService := service.NewStatisticService(statisticRepo, statisticsScraper)
 	constructionProjectService := service.NewConstructionProjectService(constructionRepo)
 

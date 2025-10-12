@@ -37,3 +37,12 @@ migrate: ## Run database migrations
 scrape-statistics: ## Run the statistics scraper (production command)
 	@echo "Running statistics scraper..."
 	@go run cmd/scrape-statistics/main.go
+
+scrape-school-details: ## Run the school details scraper (production command)
+	@echo "Running school details scraper..."
+	@echo "⚠️  This will take several hours to complete"
+	@go run cmd/scrape-school-details/main.go
+
+debug-school: ## Debug a single school (Hermann-Ehlers-Gymnasium) in headless mode
+	@echo "Running debug scraper for single school..."
+	@go run cmd/debug-school/main.go

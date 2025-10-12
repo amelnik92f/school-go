@@ -7,19 +7,23 @@ A Go backend service that fetches school data from external sources, stores it l
 ```
 school-go/
 ├── cmd/
-│   ├── api/            # Main application entry point
-│   └── migrate/        # Database migration tool
+│   ├── api/                    # Main application entry point
+│   ├── migrate/                # Database migration tool
+│   ├── scrape-statistics/      # Statistics scraper
+│   └── scrape-school-details/  # School details scraper (NEW!)
 ├── internal/
 │   ├── config/         # Configuration management
 │   ├── database/       # Database connection and migrations
 │   ├── models/         # Data models
 │   ├── repository/     # Data access layer
 │   ├── service/        # Business logic
+│   ├── scraper/        # Web scrapers for Berlin school data
 │   ├── fetcher/        # External data fetchers
 │   ├── handler/        # HTTP handlers
 │   ├── scheduler/      # Scheduled jobs (cron)
 │   └── server/         # HTTP server setup
 ├── data/               # Database files (gitignored)
+├── cache/              # Scraper cache (gitignored)
 ├── .env.example        # Example environment variables
 ├── go.mod              # Go module definition
 └── Makefile           # Build automation
@@ -63,15 +67,18 @@ The server will start on `http://localhost:8080`
 ## 📋 Available Make Commands
 
 ```bash
-make help            # Show all available commands
-make install-deps    # Install Go dependencies
-make build          # Build the application binary
-make run            # Run the application
-make dev            # Run with hot reload (requires air)
-make test           # Run tests
-make test-coverage  # Run tests with coverage report
-make clean          # Clean build artifacts
-make migrate        # Run database migrations
+make help                  # Show all available commands
+make install-deps          # Install Go dependencies
+make build                 # Build the application binary
+make run                   # Run the application
+make dev                   # Run with hot reload (requires air)
+make test                  # Run tests
+make test-coverage         # Run tests with coverage report
+make clean                 # Clean build artifacts
+make migrate               # Run database migrations
+make scrape-statistics     # Scrape school statistics from Berlin education website
+make scrape-school-details # Scrape detailed school information (takes several hours)
+make build-scrapers        # Build all scraper binaries
 ```
 
 ## 🔌 API Endpoints
@@ -171,15 +178,39 @@ Configuration is managed through environment variables. See `.env.example` for a
 - `FETCH_SCHEDULE` - Cron schedule for data fetching
 - `API_TIMEOUT` - API request timeout
 
+## 🕷️ Web Scrapers
+
+This project includes specialized scrapers for the Berlin education website:
+
+### School Statistics Scraper
+Scrapes basic statistics (students, teachers, classes) from the Berlin education statistics website.
+
+```bash
+make scrape-statistics
+```
+
+### School Details Scraper (NEW!)
+Comprehensive scraper that extracts detailed information for each school:
+- Languages offered (Sprachen)
+- Advanced courses (Leistungskurse)  
+- Programs and offerings (Angebote)
+- Availability after 4th grade
+- Student statistics (citizenship, languages, residence, absences)
+- **File-based caching** for fast subsequent runs
+
+```bash
+# First run (2-4 hours)
+make scrape-school-details
+
 ## 📝 Next Steps
 
-1. **Implement Data Fetchers**: Update `internal/fetcher/school_fetcher.go` to fetch data from your actual sources
+1. **Web Scrapers**: Already implemented for Berlin school data
 2. **Add More Models**: Create additional models in `internal/models/`
 3. **Extend Repositories**: Add more data access methods in `internal/repository/`
 4. **Add Authentication**: Implement JWT or API key authentication
-5. **Add Validation**: Use a validation library like `go-playground/validator`
-6. **Add Logging**: Replace standard log with structured logging (e.g., `zap` or `zerolog`)
-7. **Add Tests**: Write unit and integration tests
+5. **API Integration**: Expose school details through REST API
+6. **Add Tests**: Write unit and integration tests for scrapers
+7. **Frontend Integration**: Connect with the Next.js frontend
 
 ## 📚 Learning Resources
 

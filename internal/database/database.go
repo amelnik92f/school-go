@@ -111,6 +111,98 @@ func RunMigrations(db *sqlx.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_statistics_school_number ON school_statistics(school_number)`,
 		`CREATE INDEX IF NOT EXISTS idx_statistics_school_year ON school_statistics(school_year)`,
 		`CREATE INDEX IF NOT EXISTS idx_statistics_scraped_at ON school_statistics(scraped_at)`,
+
+		// Create school_details table for detailed school information
+		`CREATE TABLE IF NOT EXISTS school_details (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL,
+			school_name TEXT NOT NULL,
+			languages TEXT DEFAULT '',
+			courses TEXT DEFAULT '',
+			offerings TEXT DEFAULT '',
+			available_after_4th_grade BOOLEAN DEFAULT 0,
+			additional_info TEXT DEFAULT '',
+			equipment TEXT DEFAULT '',
+			working_groups TEXT DEFAULT '',
+			partners TEXT DEFAULT '',
+			differentiation TEXT DEFAULT '',
+			lunch_info TEXT DEFAULT '',
+			dual_learning TEXT DEFAULT '',
+			citizenship_data TEXT DEFAULT '',
+			language_data TEXT DEFAULT '',
+			residence_data TEXT DEFAULT '',
+			absence_data TEXT DEFAULT '',
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(school_number)
+		)`,
+		// Create indexes for school_details
+		`CREATE INDEX IF NOT EXISTS idx_school_details_school_number ON school_details(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_school_details_scraped_at ON school_details(scraped_at)`,
+		`CREATE INDEX IF NOT EXISTS idx_school_details_available_after_4th ON school_details(available_after_4th_grade)`,
+
+		// Create school_citizenship_stats table for normalized citizenship data
+		`CREATE TABLE IF NOT EXISTS school_citizenship_stats (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL,
+			citizenship TEXT NOT NULL,
+			female_students INTEGER DEFAULT 0,
+			male_students INTEGER DEFAULT 0,
+			total INTEGER DEFAULT 0,
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(school_number, citizenship)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_citizenship_school_number ON school_citizenship_stats(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_citizenship_scraped_at ON school_citizenship_stats(scraped_at)`,
+
+		// Create school_language_stats table for normalized language data
+		`CREATE TABLE IF NOT EXISTS school_language_stats (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL UNIQUE,
+			total_students INTEGER DEFAULT 0,
+			ndh_female_students INTEGER DEFAULT 0,
+			ndh_male_students INTEGER DEFAULT 0,
+			ndh_total INTEGER DEFAULT 0,
+			ndh_percentage REAL DEFAULT 0.0,
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_language_school_number ON school_language_stats(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_language_scraped_at ON school_language_stats(scraped_at)`,
+
+		// Create school_residence_stats table for normalized residence data
+		`CREATE TABLE IF NOT EXISTS school_residence_stats (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL,
+			district TEXT NOT NULL,
+			student_count INTEGER DEFAULT 0,
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(school_number, district)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_residence_school_number ON school_residence_stats(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_residence_district ON school_residence_stats(district)`,
+		`CREATE INDEX IF NOT EXISTS idx_residence_scraped_at ON school_residence_stats(scraped_at)`,
+
+		// Create school_absence_stats table for normalized absence data
+		`CREATE TABLE IF NOT EXISTS school_absence_stats (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT NOT NULL UNIQUE,
+			school_absence_rate REAL DEFAULT 0.0,
+			school_unexcused_rate REAL DEFAULT 0.0,
+			school_type_absence_rate REAL DEFAULT 0.0,
+			school_type_unexcused_rate REAL DEFAULT 0.0,
+			region_absence_rate REAL DEFAULT 0.0,
+			region_unexcused_rate REAL DEFAULT 0.0,
+			berlin_absence_rate REAL DEFAULT 0.0,
+			berlin_unexcused_rate REAL DEFAULT 0.0,
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_absence_school_number ON school_absence_stats(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_absence_scraped_at ON school_absence_stats(scraped_at)`,
 	}
 
 	for i, migration := range migrations {

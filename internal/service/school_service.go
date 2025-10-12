@@ -15,15 +15,25 @@ import (
 type SchoolService struct {
 	repo             *repository.SchoolRepository
 	constructionRepo *repository.ConstructionProjectRepository
+	detailRepo       *repository.SchoolDetailRepository
+	statsRepo        *repository.SchoolStatisticsRepository
 	fetcher          *fetcher.SchoolFetcher
 	geocoder         *utils.Geocoder
 	logger           *slog.Logger
 }
 
-func NewSchoolService(repo *repository.SchoolRepository, constructionRepo *repository.ConstructionProjectRepository, fetcher *fetcher.SchoolFetcher) *SchoolService {
+func NewSchoolService(
+	repo *repository.SchoolRepository,
+	constructionRepo *repository.ConstructionProjectRepository,
+	detailRepo *repository.SchoolDetailRepository,
+	statsRepo *repository.SchoolStatisticsRepository,
+	fetcher *fetcher.SchoolFetcher,
+) *SchoolService {
 	return &SchoolService{
 		repo:             repo,
 		constructionRepo: constructionRepo,
+		detailRepo:       detailRepo,
+		statsRepo:        statsRepo,
 		fetcher:          fetcher,
 		geocoder:         utils.NewGeocoder(),
 		logger:           slog.Default(),
@@ -279,4 +289,123 @@ func (s *SchoolService) RefreshSchoolsData(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+// GetAllSchoolsEnriched returns all schools enriched with details, statistics, and construction projects
+func (s *SchoolService) GetAllSchoolsEnriched(ctx context.Context) ([]models.EnrichedSchool, error) {
+	// Get all schools
+	schools, err := s.repo.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enrich each school with additional data
+	enrichedSchools := make([]models.EnrichedSchool, 0, len(schools))
+	for _, school := range schools {
+		enriched, err := s.enrichSchool(ctx, school)
+		if err != nil {
+			s.logger.Warn("failed to enrich school",
+				slog.String("school_number", school.SchoolNumber),
+				slog.String("school_name", school.Name),
+				slog.String("error", err.Error()),
+			)
+			// Include school even if enrichment fails
+			enriched = models.EnrichedSchool{
+				School: school,
+			}
+		}
+		enrichedSchools = append(enrichedSchools, enriched)
+	}
+
+	return enrichedSchools, nil
+}
+
+// GetSchoolByIDEnriched returns a single enriched school by its ID
+func (s *SchoolService) GetSchoolByIDEnriched(ctx context.Context, id int64) (*models.EnrichedSchool, error) {
+	school, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	enriched, err := s.enrichSchool(ctx, *school)
+	if err != nil {
+		s.logger.Warn("failed to enrich school",
+			slog.Int64("school_id", id),
+			slog.String("error", err.Error()),
+		)
+		// Return school without enrichment if enrichment fails
+		return &models.EnrichedSchool{School: *school}, nil
+	}
+
+	return &enriched, nil
+}
+
+// enrichSchool enriches a single school with all related data
+func (s *SchoolService) enrichSchool(ctx context.Context, school models.School) (models.EnrichedSchool, error) {
+	enriched := models.EnrichedSchool{
+		School: school,
+	}
+
+	// Fetch school details
+	details, err := s.detailRepo.GetBySchoolNumber(ctx, school.SchoolNumber)
+	if err != nil {
+		// Log but don't fail - some schools might not have details
+		s.logger.Debug("no details found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.Details = details
+	}
+
+	// Fetch citizenship stats
+	citizenshipStats, err := s.statsRepo.GetCitizenshipStats(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no citizenship stats found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.CitizenshipStats = citizenshipStats
+	}
+
+	// Fetch language stats
+	languageStat, err := s.statsRepo.GetLanguageStat(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no language stats found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.LanguageStat = languageStat
+	}
+
+	// Fetch residence stats
+	residenceStats, err := s.statsRepo.GetResidenceStats(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no residence stats found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.ResidenceStats = residenceStats
+	}
+
+	// Fetch absence stats
+	absenceStat, err := s.statsRepo.GetAbsenceStat(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no absence stats found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.AbsenceStat = absenceStat
+	}
+
+	// Fetch construction projects
+	constructionProjects, err := s.constructionRepo.GetBySchoolNumber(ctx, school.SchoolNumber)
+	if err != nil {
+		s.logger.Debug("no construction projects found for school",
+			slog.String("school_number", school.SchoolNumber),
+		)
+	} else {
+		enriched.ConstructionProjects = constructionProjects
+	}
+
+	return enriched, nil
 }

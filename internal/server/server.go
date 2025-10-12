@@ -74,11 +74,8 @@ func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler) {
 	s.router.Route("/api/v1", func(r chi.Router) {
 		// Schools endpoints
 		r.Route("/schools", func(r chi.Router) {
-			r.Get("/", schoolHandler.GetSchools)
-			r.Post("/", schoolHandler.CreateSchool)
-			r.Get("/{id}", schoolHandler.GetSchool)
-			r.Put("/{id}", schoolHandler.UpdateSchool)
-			r.Delete("/{id}", schoolHandler.DeleteSchool)
+			r.Get("/", schoolHandler.GetSchoolsEnriched)
+			r.Get("/{id}", schoolHandler.GetSchoolEnriched)
 		})
 
 		// Manual refresh endpoint (useful for development/testing)
@@ -100,4 +97,3 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
-

@@ -90,6 +90,27 @@ func RunMigrations(db *sqlx.DB) error {
 		`CREATE INDEX IF NOT EXISTS idx_construction_projects_school_number ON construction_projects(school_number)`,
 		`CREATE INDEX IF NOT EXISTS idx_construction_projects_district ON construction_projects(district)`,
 		`CREATE INDEX IF NOT EXISTS idx_construction_projects_created_at ON construction_projects(created_at)`,
+
+		// Create school_statistics table
+		`CREATE TABLE IF NOT EXISTS school_statistics (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			school_number TEXT,
+			school_name TEXT,
+			district TEXT,
+			school_type TEXT,
+			school_year TEXT,
+			students TEXT,
+			teachers TEXT,
+			classes TEXT,
+			metadata TEXT,
+			scraped_at DATETIME,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(school_number, school_year)
+		)`,
+		// Create indexes for school_statistics
+		`CREATE INDEX IF NOT EXISTS idx_statistics_school_number ON school_statistics(school_number)`,
+		`CREATE INDEX IF NOT EXISTS idx_statistics_school_year ON school_statistics(school_year)`,
+		`CREATE INDEX IF NOT EXISTS idx_statistics_scraped_at ON school_statistics(scraped_at)`,
 	}
 
 	for i, migration := range migrations {

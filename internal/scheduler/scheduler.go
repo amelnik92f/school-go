@@ -12,18 +12,20 @@ import (
 )
 
 type Scheduler struct {
-	cron          *cron.Cron
-	schoolService *service.SchoolService
-	config        *config.Config
-	logger        *slog.Logger
+	cron             *cron.Cron
+	schoolService    *service.SchoolService
+	statisticService *service.StatisticService
+	config           *config.Config
+	logger           *slog.Logger
 }
 
-func New(cfg *config.Config, schoolService *service.SchoolService) *Scheduler {
+func New(cfg *config.Config, schoolService *service.SchoolService, statisticService *service.StatisticService) *Scheduler {
 	return &Scheduler{
-		cron:          cron.New(),
-		schoolService: schoolService,
-		config:        cfg,
-		logger:        slog.Default(),
+		cron:             cron.New(),
+		schoolService:    schoolService,
+		statisticService: statisticService,
+		config:           cfg,
+		logger:           slog.Default(),
 	}
 }
 
@@ -41,15 +43,32 @@ func (s *Scheduler) Start() {
 		}
 	})
 	if err != nil {
-		s.logger.Error("failed to schedule job", slog.String("error", err.Error()))
+		s.logger.Error("failed to schedule school data refresh job", slog.String("error", err.Error()))
 	}
 
-	// Add more scheduled jobs here as needed
-	// Example:
-	// s.cron.AddFunc("0 3 * * *", s.cleanupOldData)
+	// Schedule statistics scraping
+	_, err = s.cron.AddFunc(s.config.FetchSchedule, func() {
+		s.logger.Info("running scheduled statistics scrape")
+
+		// Create context with timeout for the scrape operation
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		if err := s.statisticService.RefreshStatisticsData(ctx); err != nil {
+			s.logger.Error("scheduled statistics scrape failed", slog.String("error", err.Error()))
+		} else {
+			s.logger.Info("statistics scrape completed successfully")
+		}
+	})
+	if err != nil {
+		s.logger.Error("failed to schedule statistics scrape job", slog.String("error", err.Error()))
+	}
 
 	s.cron.Start()
-	s.logger.Info("scheduler started", slog.String("schedule", s.config.FetchSchedule))
+	s.logger.Info("scheduler started",
+		slog.String("school_refresh_schedule", s.config.FetchSchedule),
+		slog.String("statistics_scrape_schedule", s.config.FetchSchedule),
+	)
 }
 
 func (s *Scheduler) Stop() {

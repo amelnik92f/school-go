@@ -15,6 +15,7 @@ import (
 	"schools-be/internal/handler"
 	"schools-be/internal/repository"
 	"schools-be/internal/scheduler"
+	"schools-be/internal/scraper"
 	"schools-be/internal/server"
 	"schools-be/internal/service"
 )
@@ -56,12 +57,15 @@ func main() {
 	// Initialize repositories
 	schoolRepo := repository.NewSchoolRepository(db)
 	constructionRepo := repository.NewConstructionProjectRepository(db)
+	statisticRepo := repository.NewStatisticRepository(db)
 
-	// Initialize fetchers
+	// Initialize fetchers and scrapers
 	schoolFetcher := fetcher.NewSchoolFetcher()
+	statisticsScraper := scraper.NewStatisticsScraper()
 
 	// Initialize services
 	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolFetcher)
+	statisticService := service.NewStatisticService(statisticRepo, statisticsScraper)
 
 	// Initialize handlers
 	schoolHandler := handler.NewSchoolHandler(schoolService)
@@ -70,7 +74,7 @@ func main() {
 	srv := server.New(cfg, schoolHandler)
 
 	// Initialize and start scheduler
-	sched := scheduler.New(cfg, schoolService)
+	sched := scheduler.New(cfg, schoolService, statisticService)
 	sched.Start()
 	defer sched.Stop()
 

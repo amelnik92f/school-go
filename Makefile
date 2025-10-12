@@ -33,4 +33,7 @@ clean: ## Clean build artifacts
 migrate: ## Run database migrations
 	go run cmd/migrate/main.go
 
-
+# Scraping targets
+scrape-statistics: ## Run the statistics scraper (production command)
+	@echo "Running statistics scraper..."
+	@go run cmd/scrape-statistics/main.go

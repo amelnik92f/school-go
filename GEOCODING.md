@@ -27,17 +27,18 @@ longitude REAL
 
 When `FetchAndStoreConstructionProjects()` is called:
 1. Fetches construction projects from Berlin API
-2. Categorizes projects:
-   - **Projects with school numbers**: Skipped (belong to existing schools with coordinates)
-   - **Standalone projects**: Geocoded (new schools without existing coordinates)
-3. For each standalone project:
+2. Fetches all existing schools to build a lookup set of valid school numbers
+3. Categorizes projects:
+   - **Projects with existing school numbers**: Skipped (belong to existing schools with coordinates)
+   - **Standalone/orphaned projects**: Geocoded (projects without school numbers OR with school numbers that don't exist in the schools table)
+4. For each standalone/orphaned project:
    - Builds address string from street, postal code, and city
    - Geocodes the address (with rate limiting)
    - Stores coordinates along with other project data
-4. Logs progress every 10 geocoded projects
-5. Logs final statistics:
+5. Logs progress every 10 geocoded projects
+6. Logs final statistics:
    - Total projects
-   - Projects skipped (with school numbers)
+   - Projects skipped (with existing school numbers)
    - Standalone projects successfully geocoded
    - Failed geocoding attempts
 
@@ -83,11 +84,13 @@ fmt.Printf("Lat: %f, Lon: %f\n", coords.Latitude, coords.Longitude)
 
 ## Performance Considerations
 
-- **Selective Geocoding**: Only standalone projects (without school numbers) are geocoded, significantly reducing API calls
-- **Time**: Depends on the number of standalone projects
+- **Selective Geocoding**: Only standalone/orphaned projects are geocoded:
+  - Projects without school numbers
+  - Projects with school numbers that don't exist in the schools table (orphaned)
+  - Projects with existing school numbers are skipped instantly
+- **Time**: Depends on the number of standalone/orphaned projects
   - ~10-20 standalone projects: ~20-40 seconds
   - ~50-100 standalone projects: ~1-2 minutes
-  - Projects with school numbers are skipped instantly
 - **Rate Limiting**: Cannot be parallelized due to Nominatim's rate limits (1 req/1.1s)
 - **Failures**: Projects that fail geocoding are still stored (with 0,0 coordinates) and logged
 

@@ -164,24 +164,42 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 		return apperrors.NewDatabaseError("fetch construction projects", err)
 	}
 
-	// Separate projects into those with and without school numbers
-	projectsWithSchools := 0
+	// Get all existing school numbers to determine which projects need geocoding
+	schools, err := s.repo.GetAll(ctx)
+	if err != nil {
+		s.logger.Error("failed to fetch existing schools", slog.String("error", err.Error()))
+		return apperrors.NewDatabaseError("fetch existing schools", err)
+	}
+
+	// Build a set of existing school numbers for fast lookup
+	existingSchoolNumbers := make(map[string]bool)
+	for _, school := range schools {
+		if school.SchoolNumber != "" {
+			existingSchoolNumbers[school.SchoolNumber] = true
+		}
+	}
+
+	// Separate projects into those that need geocoding vs those that don't
+	projectsWithExistingSchools := 0
 	standaloneProjects := 0
 	for _, proj := range response.Index {
-		if proj.SchoolNumber != "" {
-			projectsWithSchools++
-		} else {
+		// A project needs geocoding if:
+		// 1. It has no school_number (completely standalone), OR
+		// 2. It has a school_number that doesn't exist in the schools table (orphaned)
+		if proj.SchoolNumber == "" || proj.SchoolNumber == " " || !existingSchoolNumbers[proj.SchoolNumber] {
 			standaloneProjects++
+		} else {
+			projectsWithExistingSchools++
 		}
 	}
 
 	s.logger.Info("processing construction projects",
 		slog.Int("total", len(response.Index)),
-		slog.Int("with_school_number", projectsWithSchools),
+		slog.Int("with_existing_schools", projectsWithExistingSchools),
 		slog.Int("standalone_to_geocode", standaloneProjects),
 	)
 
-	// Convert to CreateConstructionProjectInput and geocode only standalone projects
+	// Convert to CreateConstructionProjectInput and geocode standalone/orphaned projects
 	projects := make([]models.CreateConstructionProjectInput, 0, len(response.Index))
 	geocodedCount := 0
 	skippedCount := 0
@@ -189,8 +207,10 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 	for _, proj := range response.Index {
 		var lat, lon float64
 
-		// Only geocode projects without a school number (standalone projects)
-		if proj.SchoolNumber == "" || proj.SchoolNumber == " " {
+		// Geocode projects that are standalone or have school numbers not in the schools table
+		shouldGeocode := proj.SchoolNumber == "" || proj.SchoolNumber == " " || !existingSchoolNumbers[proj.SchoolNumber]
+
+		if shouldGeocode {
 			// Build address string for geocoding
 			address := fmt.Sprintf("%s, %s %s", proj.Street, proj.PostalCode, proj.City)
 
@@ -203,6 +223,7 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 				geocodedCount++
 				s.logger.Debug("geocoded standalone construction project",
 					slog.Int("project_id", proj.ID),
+					slog.String("school_number", proj.SchoolNumber),
 					slog.String("address", address),
 					slog.Float64("lat", lat),
 					slog.Float64("lon", lon),
@@ -210,11 +231,12 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 			} else {
 				s.logger.Warn("failed to geocode construction project",
 					slog.Int("project_id", proj.ID),
+					slog.String("school_number", proj.SchoolNumber),
 					slog.String("address", address),
 				)
 			}
 		} else {
-			// Skip geocoding for projects with school numbers
+			// Skip geocoding for projects with existing school numbers
 			skippedCount++
 		}
 

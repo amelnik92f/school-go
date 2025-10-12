@@ -86,6 +86,31 @@ func (r *ConstructionProjectRepository) GetBySchoolNumber(ctx context.Context, s
 	return projects, nil
 }
 
+// GetStandalone retrieves construction projects that are not assigned to any existing school
+// This includes only valid orphaned projects (school_number doesn't exist in schools table)
+// Excludes meta entries, legends, and projects with no meaningful data
+func (r *ConstructionProjectRepository) GetStandalone(ctx context.Context) ([]models.ConstructionProject, error) {
+	var projects []models.ConstructionProject
+	query := `
+		SELECT cp.* 
+		FROM construction_projects cp 
+		LEFT JOIN schools s ON cp.school_number = s.school_number 
+		WHERE cp.school_number != '' 
+		  AND cp.school_number != ' ' 
+		  AND s.school_number IS NULL
+		  AND cp.school_name != ''
+		  AND cp.school_name NOT LIKE 'Legende:%'
+		ORDER BY cp.created_at DESC
+	`
+
+	err := r.db.SelectContext(ctx, &projects, query)
+	if err != nil {
+		return nil, errors.NewDatabaseError("get standalone construction projects", err)
+	}
+
+	return projects, nil
+}
+
 // DeleteAll deletes all construction projects
 func (r *ConstructionProjectRepository) DeleteAll(ctx context.Context) error {
 	query := `DELETE FROM construction_projects`

@@ -20,7 +20,7 @@ type Server struct {
 	server *http.Server
 }
 
-func New(cfg *config.Config, schoolHandler *handler.SchoolHandler) *Server {
+func New(cfg *config.Config, schoolHandler *handler.SchoolHandler, constructionProjectHandler *handler.ConstructionProjectHandler) *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 		config: cfg,
@@ -30,7 +30,7 @@ func New(cfg *config.Config, schoolHandler *handler.SchoolHandler) *Server {
 	s.setupMiddleware()
 
 	// Setup routes
-	s.setupRoutes(schoolHandler)
+	s.setupRoutes(schoolHandler, constructionProjectHandler)
 
 	// Create HTTP server
 	s.server = &http.Server{
@@ -65,7 +65,7 @@ func (s *Server) setupMiddleware() {
 	}))
 }
 
-func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler) {
+func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler, constructionProjectHandler *handler.ConstructionProjectHandler) {
 	// Health check
 	healthHandler := handler.NewHealthHandler()
 	s.router.Get("/health", healthHandler.HealthCheck)
@@ -76,6 +76,13 @@ func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler) {
 		r.Route("/schools", func(r chi.Router) {
 			r.Get("/", schoolHandler.GetSchoolsEnriched)
 			r.Get("/{id}", schoolHandler.GetSchoolEnriched)
+		})
+
+		// Construction projects endpoints
+		r.Route("/construction-projects", func(r chi.Router) {
+			r.Get("/", constructionProjectHandler.GetAll)
+			r.Get("/standalone", constructionProjectHandler.GetStandalone)
+			r.Get("/{id}", constructionProjectHandler.GetByID)
 		})
 
 		// Manual refresh endpoint (useful for development/testing)

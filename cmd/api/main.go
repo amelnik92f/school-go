@@ -68,12 +68,14 @@ func main() {
 	// Initialize services
 	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolDetailRepo, schoolStatsRepo, schoolFetcher)
 	statisticService := service.NewStatisticService(statisticRepo, statisticsScraper)
+	constructionProjectService := service.NewConstructionProjectService(constructionRepo)
 
 	// Initialize handlers
 	schoolHandler := handler.NewSchoolHandler(schoolService)
+	constructionProjectHandler := handler.NewConstructionProjectHandler(constructionProjectService)
 
 	// Initialize HTTP server
-	srv := server.New(cfg, schoolHandler)
+	srv := server.New(cfg, schoolHandler, constructionProjectHandler)
 
 	// Initialize and start scheduler
 	sched := scheduler.New(cfg, schoolService, statisticService)

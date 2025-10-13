@@ -9,11 +9,13 @@ import (
 )
 
 type Config struct {
-	Port          string
-	Env           string
-	DBPath        string
-	FetchSchedule string
-	APITimeout    time.Duration
+	Port                   string
+	Env                    string
+	DBPath                 string
+	FetchSchedule          string
+	APITimeout             time.Duration
+	GeminiAPIKey           string
+	OpenRouteServiceAPIKey string
 }
 
 func Load() (*Config, error) {
@@ -21,11 +23,13 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Port:          getEnv("PORT", "8080"),
-		Env:           getEnv("ENV", "development"),
-		DBPath:        getEnv("DB_PATH", "./data/schools.db"),
-		FetchSchedule: getEnv("FETCH_SCHEDULE", "0 2 * * *"), // 2 AM daily
-		APITimeout:    parseDuration(getEnv("API_TIMEOUT", "30s"), 30*time.Second),
+		Port:                   getEnv("PORT", "8080"),
+		Env:                    getEnv("ENV", "development"),
+		DBPath:                 getEnv("DB_PATH", "./data/schools.db"),
+		FetchSchedule:          getEnv("FETCH_SCHEDULE", "0 2 * * *"), // 2 AM daily
+		APITimeout:             parseDuration(getEnv("API_TIMEOUT", "30s"), 30*time.Second),
+		GeminiAPIKey:           getEnv("GEMINI_API_KEY", ""),
+		OpenRouteServiceAPIKey: getEnv("OPENROUTESERVICE_API_KEY", ""),
 	}
 
 	return cfg, nil
@@ -53,4 +57,3 @@ func (c *Config) IsDevelopment() bool {
 func (c *Config) GetServerAddr() string {
 	return fmt.Sprintf(":%s", c.Port)
 }
-

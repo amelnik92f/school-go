@@ -76,6 +76,8 @@ func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler, constructionP
 		r.Route("/schools", func(r chi.Router) {
 			r.Get("/", schoolHandler.GetSchoolsEnriched)
 			r.Get("/{id}", schoolHandler.GetSchoolEnriched)
+			r.Get("/{id}/summary", schoolHandler.GetSchoolSummary)
+			r.Post("/{id}/routes", schoolHandler.CalculateRoutes)
 		})
 
 		// Construction projects endpoints

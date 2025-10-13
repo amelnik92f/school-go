@@ -70,8 +70,19 @@ func main() {
 	statisticService := service.NewStatisticService(statisticRepo, statisticsScraper)
 	constructionProjectService := service.NewConstructionProjectService(constructionRepo)
 
+	// Initialize AI service (may be nil if API key is not configured)
+	ctx := context.Background()
+	aiService, err := service.NewAIService(ctx, cfg)
+	if err != nil {
+		logger.Warn("AI service not available", slog.String("error", err.Error()))
+		aiService = nil
+	}
+
+	// Initialize routes service
+	routesService := service.NewRoutesService(cfg)
+
 	// Initialize handlers
-	schoolHandler := handler.NewSchoolHandler(schoolService)
+	schoolHandler := handler.NewSchoolHandler(schoolService, aiService, routesService)
 	constructionProjectHandler := handler.NewConstructionProjectHandler(constructionProjectService)
 
 	// Initialize HTTP server
@@ -81,6 +92,11 @@ func main() {
 	sched := scheduler.New(cfg, schoolService, statisticService)
 	sched.Start()
 	defer sched.Stop()
+
+	// Ensure AI service is closed on shutdown
+	if aiService != nil {
+		defer aiService.Close()
+	}
 
 	// Start server in a goroutine
 	go func() {

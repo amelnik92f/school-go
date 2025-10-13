@@ -14,6 +14,7 @@ type Config struct {
 	DBPath                 string
 	FetchSchedule          string
 	APITimeout             time.Duration
+	APIKey                 string
 	GeminiAPIKey           string
 	OpenRouteServiceAPIKey string
 }
@@ -28,6 +29,7 @@ func Load() (*Config, error) {
 		DBPath:                 getEnv("DB_PATH", "./data/schools.db"),
 		FetchSchedule:          getEnv("FETCH_SCHEDULE", "0 2 * * *"), // 2 AM daily
 		APITimeout:             parseDuration(getEnv("API_TIMEOUT", "30s"), 30*time.Second),
+		APIKey:                 getEnv("API_KEY", ""),
 		GeminiAPIKey:           getEnv("GEMINI_API_KEY", ""),
 		OpenRouteServiceAPIKey: getEnv("OPENROUTESERVICE_API_KEY", ""),
 	}

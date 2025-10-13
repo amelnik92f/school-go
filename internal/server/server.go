@@ -8,6 +8,7 @@ import (
 
 	"schools-be/internal/config"
 	"schools-be/internal/handler"
+	appmiddleware "schools-be/internal/middleware"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -58,7 +59,7 @@ func (s *Server) setupMiddleware() {
 	s.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-API-Key"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
@@ -66,12 +67,15 @@ func (s *Server) setupMiddleware() {
 }
 
 func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler, constructionProjectHandler *handler.ConstructionProjectHandler) {
-	// Health check
+	// Health check (no authentication required)
 	healthHandler := handler.NewHealthHandler()
 	s.router.Get("/health", healthHandler.HealthCheck)
 
-	// API routes
+	// API routes (with authentication)
 	s.router.Route("/api/v1", func(r chi.Router) {
+		// Apply API key authentication middleware to all API routes
+		r.Use(appmiddleware.APIKeyAuth(s.config))
+
 		// Schools endpoints
 		r.Route("/schools", func(r chi.Router) {
 			r.Get("/", schoolHandler.GetSchoolsEnriched)

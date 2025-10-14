@@ -1,0 +1,49 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*.test
+*.out
+coverage.out
+
+# Development files
+.env
+.env.local
+.air.toml
+tmp/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+EXAMPLES.md
+API_AUTH.md
+ARCHITECTURE.md
+CONSTRUCTION_PROJECTS_API.md
+ENRICHED_API.md
+GEOCODING.md
+GETTING_STARTED.md
+MIGRATION_SUMMARY.md
+QUICK_START.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data directories (will be mounted as volumes)
+data/
+cache/
+

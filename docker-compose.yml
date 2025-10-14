@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  schools-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: schools-backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    env_file:
+      - .env
+    volumes:
+      # Mount data directory for SQLite database
+      - ./data:/app/data
+      # Mount cache directory for scraper cache
+      - ./cache:/app/cache
+    environment:
+      # Override DB_PATH to use the mounted volume
+      - DB_PATH=/app/data/schools.db
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

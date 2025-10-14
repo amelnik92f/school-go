@@ -27,7 +27,7 @@ func Load() (*Config, error) {
 		Port:                   getEnv("PORT", "8080"),
 		Env:                    getEnv("ENV", "development"),
 		DBPath:                 getEnv("DB_PATH", "./data/schools.db"),
-		FetchSchedule:          getEnv("FETCH_SCHEDULE", "0 2 * * *"), // 2 AM daily
+		FetchSchedule:          getEnv("FETCH_SCHEDULE", "0 2 * * 0"), // 2 AM Sunday
 		APITimeout:             parseDuration(getEnv("API_TIMEOUT", "30s"), 30*time.Second),
 		APIKey:                 getEnv("API_KEY", ""),
 		GeminiAPIKey:           getEnv("GEMINI_API_KEY", ""),

@@ -12,20 +12,22 @@ import (
 )
 
 type Scheduler struct {
-	cron             *cron.Cron
-	schoolService    *service.SchoolService
-	statisticService *service.StatisticService
-	config           *config.Config
-	logger           *slog.Logger
+	cron                *cron.Cron
+	schoolService       *service.SchoolService
+	statisticService    *service.StatisticService
+	schoolDetailService *service.SchoolDetailService
+	config              *config.Config
+	logger              *slog.Logger
 }
 
-func New(cfg *config.Config, schoolService *service.SchoolService, statisticService *service.StatisticService) *Scheduler {
+func New(cfg *config.Config, schoolService *service.SchoolService, statisticService *service.StatisticService, schoolDetailService *service.SchoolDetailService) *Scheduler {
 	return &Scheduler{
-		cron:             cron.New(),
-		schoolService:    schoolService,
-		statisticService: statisticService,
-		config:           cfg,
-		logger:           slog.Default(),
+		cron:                cron.New(),
+		schoolService:       schoolService,
+		statisticService:    statisticService,
+		schoolDetailService: schoolDetailService,
+		config:              cfg,
+		logger:              slog.Default(),
 	}
 }
 
@@ -64,10 +66,29 @@ func (s *Scheduler) Start() {
 		s.logger.Error("failed to schedule statistics scrape job", slog.String("error", err.Error()))
 	}
 
+	// Schedule school details refresh
+	_, err = s.cron.AddFunc(s.config.FetchSchedule, func() {
+		s.logger.Info("running scheduled school details refresh")
+
+		// Create context with timeout for the scrape operation
+		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Hour)
+		defer cancel()
+
+		if err := s.schoolDetailService.ScrapeAndStoreDetails(ctx); err != nil {
+			s.logger.Error("scheduled school details refresh failed", slog.String("error", err.Error()))
+		} else {
+			s.logger.Info("school details refresh completed successfully")
+		}
+	})
+	if err != nil {
+		s.logger.Error("failed to schedule school details refresh job", slog.String("error", err.Error()))
+	}
+
 	s.cron.Start()
 	s.logger.Info("scheduler started",
 		slog.String("school_refresh_schedule", s.config.FetchSchedule),
 		slog.String("statistics_scrape_schedule", s.config.FetchSchedule),
+		slog.String("school_details_refresh_schedule", s.config.FetchSchedule),
 	)
 }
 

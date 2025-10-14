@@ -64,10 +64,12 @@ func main() {
 	// Initialize fetchers and scrapers
 	schoolFetcher := fetcher.NewSchoolFetcher()
 	statisticsScraper := scraper.NewStatisticsScraper()
+	schoolDetailScraper := scraper.NewSchoolDetailsScraper()
 
 	// Initialize services
 	schoolService := service.NewSchoolService(schoolRepo, constructionRepo, schoolDetailRepo, schoolStatsRepo, statisticRepo, schoolFetcher)
 	statisticService := service.NewStatisticService(statisticRepo, statisticsScraper)
+	schoolDetailService := service.NewSchoolDetailService(schoolDetailRepo, schoolStatsRepo, schoolDetailScraper)
 	constructionProjectService := service.NewConstructionProjectService(constructionRepo)
 
 	// Initialize AI service (may be nil if API key is not configured)
@@ -89,7 +91,7 @@ func main() {
 	srv := server.New(cfg, schoolHandler, constructionProjectHandler)
 
 	// Initialize and start scheduler
-	sched := scheduler.New(cfg, schoolService, statisticService)
+	sched := scheduler.New(cfg, schoolService, statisticService, schoolDetailService)
 	sched.Start()
 	defer sched.Stop()
 

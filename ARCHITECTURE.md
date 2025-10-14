@@ -6,8 +6,7 @@
 school-go/
 │
 ├── 📱 cmd/                          # Application entry points
-│   ├── api/main.go                  # Main API server (run this!)
-│   └── migrate/main.go              # Database migration tool
+│   └── api/main.go                  # Main API server (run this!)
 │
 ├── 🔒 internal/                     # Private application code
 │   │

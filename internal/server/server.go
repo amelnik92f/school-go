@@ -90,9 +90,6 @@ func (s *Server) setupRoutes(schoolHandler *handler.SchoolHandler, constructionP
 			r.Get("/standalone", constructionProjectHandler.GetStandalone)
 			r.Get("/{id}", constructionProjectHandler.GetByID)
 		})
-
-		// Manual refresh endpoint (useful for development/testing)
-		r.Post("/refresh", schoolHandler.RefreshData)
 	})
 
 	// 404 handler

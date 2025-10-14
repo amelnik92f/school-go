@@ -32,63 +32,68 @@ func New(cfg *config.Config, schoolService *service.SchoolService, statisticServ
 }
 
 func (s *Scheduler) Start() {
-	// Schedule school data refresh
+	// Schedule full data refresh (all tasks run sequentially)
 	_, err := s.cron.AddFunc(s.config.FetchSchedule, func() {
-		s.logger.Info("running scheduled school data refresh")
-
-		// Create context with timeout for the refresh operation
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-
-		if err := s.schoolService.RefreshSchoolsData(ctx); err != nil {
-			s.logger.Error("scheduled refresh failed", slog.String("error", err.Error()))
-		}
+		s.runFullDataRefresh()
 	})
 	if err != nil {
-		s.logger.Error("failed to schedule school data refresh job", slog.String("error", err.Error()))
-	}
-
-	// Schedule statistics scraping
-	_, err = s.cron.AddFunc(s.config.FetchSchedule, func() {
-		s.logger.Info("running scheduled statistics scrape")
-
-		// Create context with timeout for the scrape operation
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-		defer cancel()
-
-		if err := s.statisticService.RefreshStatisticsData(ctx); err != nil {
-			s.logger.Error("scheduled statistics scrape failed", slog.String("error", err.Error()))
-		} else {
-			s.logger.Info("statistics scrape completed successfully")
-		}
-	})
-	if err != nil {
-		s.logger.Error("failed to schedule statistics scrape job", slog.String("error", err.Error()))
-	}
-
-	// Schedule school details refresh
-	_, err = s.cron.AddFunc(s.config.FetchSchedule, func() {
-		s.logger.Info("running scheduled school details refresh")
-
-		// Create context with timeout for the scrape operation
-		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Hour)
-		defer cancel()
-
-		if err := s.schoolDetailService.ScrapeAndStoreDetails(ctx); err != nil {
-			s.logger.Error("scheduled school details refresh failed", slog.String("error", err.Error()))
-		} else {
-			s.logger.Info("school details refresh completed successfully")
-		}
-	})
-	if err != nil {
-		s.logger.Error("failed to schedule school details refresh job", slog.String("error", err.Error()))
+		s.logger.Error("failed to schedule data refresh job", slog.String("error", err.Error()))
+		return
 	}
 
 	s.cron.Start()
 	s.logger.Info("scheduler started",
-		slog.String("school_refresh_schedule", s.config.FetchSchedule),
-		slog.String("statistics_scrape_schedule", s.config.FetchSchedule),
-		slog.String("school_details_refresh_schedule", s.config.FetchSchedule),
+		slog.String("refresh_schedule", s.config.FetchSchedule),
+	)
+}
+
+// runFullDataRefresh executes all data refresh tasks sequentially
+func (s *Scheduler) runFullDataRefresh() {
+	startTime := time.Now()
+	s.logger.Info("starting full data refresh cycle")
+
+	// Step 1: Fetch schools and construction projects
+	s.logger.Info("step 1/3: fetching school data")
+	ctx1, cancel1 := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel1()
+
+	if err := s.schoolService.FetchAndStoreSchools(ctx1); err != nil {
+		s.logger.Error("schools fetch failed", slog.String("error", err.Error()))
+	} else {
+		s.logger.Info("schools fetch completed")
+	}
+
+	if err := s.schoolService.FetchAndStoreConstructionProjects(ctx1); err != nil {
+		s.logger.Error("construction projects fetch failed", slog.String("error", err.Error()))
+	} else {
+		s.logger.Info("construction projects fetch completed")
+	}
+
+	// Step 2: Scrape statistics
+	s.logger.Info("step 2/3: scraping statistics")
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel2()
+
+	if err := s.statisticService.ScrapeAndStoreStatistics(ctx2); err != nil {
+		s.logger.Error("statistics scrape failed", slog.String("error", err.Error()))
+	} else {
+		s.logger.Info("statistics scrape completed")
+	}
+
+	// Step 3: Scrape school details (longest operation)
+	s.logger.Info("step 3/3: scraping school details (this may take several hours)")
+	ctx3, cancel3 := context.WithTimeout(context.Background(), 4*time.Hour)
+	defer cancel3()
+
+	if err := s.schoolDetailService.ScrapeAndStoreDetails(ctx3); err != nil {
+		s.logger.Error("school details scrape failed", slog.String("error", err.Error()))
+	} else {
+		s.logger.Info("school details scrape completed")
+	}
+
+	duration := time.Since(startTime)
+	s.logger.Info("full data refresh cycle completed",
+		slog.String("duration", duration.String()),
 	)
 }
 
@@ -96,9 +101,3 @@ func (s *Scheduler) Stop() {
 	s.logger.Info("stopping scheduler")
 	s.cron.Stop()
 }
-
-// Add more scheduled job functions here
-// func (s *Scheduler) cleanupOldData() {
-//     log.Println("Running cleanup job...")
-//     // Implementation
-// }

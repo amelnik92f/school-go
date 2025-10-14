@@ -32,19 +32,6 @@ func NewSchoolHandler(service *service.SchoolService, aiService *service.AIServi
 	}
 }
 
-// RefreshData manually triggers a data refresh
-func (h *SchoolHandler) RefreshData(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	if err := h.service.RefreshSchoolsData(ctx); err != nil {
-		h.logger.Error("failed to refresh data", slog.String("error", err.Error()))
-		h.respondError(w, http.StatusInternalServerError, "failed to refresh data")
-		return
-	}
-
-	h.respondJSON(w, http.StatusOK, map[string]string{"message": "data refresh completed"})
-}
-
 // GetSchoolsEnriched returns all schools with enriched data from all related tables
 func (h *SchoolHandler) GetSchoolsEnriched(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

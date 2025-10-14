@@ -304,18 +304,6 @@ func (s *SchoolService) FetchAndStoreConstructionProjects(ctx context.Context) e
 	return nil
 }
 
-// RefreshSchoolsData is deprecated, use FetchAndStoreSchools instead
-// This is kept for backward compatibility with scheduler
-func (s *SchoolService) RefreshSchoolsData(ctx context.Context) error {
-	if err := s.FetchAndStoreSchools(ctx); err != nil {
-		return err
-	}
-	if err := s.FetchAndStoreConstructionProjects(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
 // GetAllSchoolsEnriched returns all schools enriched with details, statistics, and construction projects
 func (s *SchoolService) GetAllSchoolsEnriched(ctx context.Context) ([]models.EnrichedSchool, error) {
 	// Get all schools

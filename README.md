@@ -7,10 +7,7 @@ A Go backend service that fetches school data from external sources, stores it l
 ```
 school-go/
 ├── cmd/
-│   ├── api/                    # Main application entry point
-│   ├── migrate/                # Database migration tool
-│   ├── scrape-statistics/      # Statistics scraper
-│   └── scrape-school-details/  # School details scraper (NEW!)
+│   └── api/                    # Main application entry point
 ├── internal/
 │   ├── config/         # Configuration management
 │   ├── database/       # Database connection and migrations
@@ -75,10 +72,6 @@ make dev                   # Run with hot reload (requires air)
 make test                  # Run tests
 make test-coverage         # Run tests with coverage report
 make clean                 # Clean build artifacts
-make migrate               # Run database migrations
-make scrape-statistics     # Scrape school statistics from Berlin education website
-make scrape-school-details # Scrape detailed school information (takes several hours)
-make build-scrapers        # Build all scraper binaries
 ```
 
 ## 🔌 API Endpoints
@@ -116,12 +109,7 @@ The application uses SQLite for local storage. The database file is created auto
 
 ### Migrations
 
-Migrations run automatically on application startup. You can also run them manually:
-```bash
-make migrate
-# or
-go run cmd/migrate/main.go
-```
+Migrations run automatically on application startup.
 
 ## 🛠️ Development Tips
 
@@ -180,27 +168,15 @@ Configuration is managed through environment variables. See `.env.example` for a
 
 ## 🕷️ Web Scrapers
 
-This project includes specialized scrapers for the Berlin education website:
+This project includes automated scrapers that run on a schedule:
 
-### School Statistics Scraper
-Scrapes basic statistics (students, teachers, classes) from the Berlin education statistics website.
+### Automated Data Collection
+The application automatically scrapes and updates:
+- **School Statistics**: Basic statistics (students, teachers, classes) from Berlin education statistics
+- **School Details**: Comprehensive information including languages, courses, programs, and student demographics
+- **Construction Projects**: Ongoing school construction and renovation projects
 
-```bash
-make scrape-statistics
-```
-
-### School Details Scraper (NEW!)
-Comprehensive scraper that extracts detailed information for each school:
-- Languages offered (Sprachen)
-- Advanced courses (Leistungskurse)  
-- Programs and offerings (Angebote)
-- Availability after 4th grade
-- Student statistics (citizenship, languages, residence, absences)
-- **File-based caching** for fast subsequent runs
-
-```bash
-# First run (2-4 hours)
-make scrape-school-details
+All scraping happens automatically via the scheduler (configurable via `FETCH_SCHEDULE` environment variable).
 
 ## 📝 Next Steps
 

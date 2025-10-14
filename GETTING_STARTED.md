@@ -16,8 +16,7 @@ A complete, production-ready Go backend application with:
 ```
 school-go/
 ├── cmd/
-│   ├── api/main.go        # 🚀 Main application entry point - START HERE
-│   └── migrate/main.go    # 🔧 Database migration utility
+│   └── api/main.go        # 🚀 Main application entry point - START HERE
 │
 ├── internal/              # Private application code
 │   ├── config/           # ⚙️  Configuration from .env files

@@ -37,8 +37,8 @@ func New(cfg *config.Config, schoolHandler *handler.SchoolHandler, constructionP
 	s.server = &http.Server{
 		Addr:         cfg.GetServerAddr(),
 		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  120 * time.Second, // Allow up to 2 minutes for AI operations
+		WriteTimeout: 120 * time.Second, // Allow up to 2 minutes for AI operations
 		IdleTimeout:  60 * time.Second,
 	}
 
@@ -53,7 +53,7 @@ func (s *Server) setupMiddleware() {
 	s.router.Use(middleware.Recoverer)
 
 	// Timeout middleware
-	s.router.Use(middleware.Timeout(s.config.APITimeout))
+	s.router.Use(middleware.Timeout(120 * time.Second))
 
 	// CORS middleware
 	s.router.Use(cors.Handler(cors.Options{

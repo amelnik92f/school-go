@@ -64,7 +64,7 @@ This document describes the migration of Gemini AI and OpenRouteService API call
 **AI Summary Store** (`lib/store/ai-summary-store.ts`)
 - Changed from POST `/api/summarize-school` to GET `/api/v1/schools/{id}/summary`
 - Now calls the Go backend directly
-- Uses `NEXT_PUBLIC_BACKEND_API_URL` environment variable
+- Uses `API_URL` environment variable
 
 **Travel Time Utility** (`lib/utils/travel-time.ts`)
 - Changed from POST `/api/travel-time` to POST `/api/v1/schools/{id}/routes`
@@ -87,7 +87,7 @@ OPENROUTESERVICE_API_KEY=your_openroute_service_api_key_here
 
 ### Frontend (.env.local)
 ```bash
-NEXT_PUBLIC_BACKEND_API_URL=http://localhost:8080
+API_URL=http://localhost:8080
 ```
 
 ## Dependencies Added

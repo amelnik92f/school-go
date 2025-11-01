@@ -82,14 +82,7 @@ func (s *Scheduler) runFullDataRefresh() {
 
 	// Step 3: Scrape school details (longest operation)
 	s.logger.Info("step 3/3: scraping school details (this may take several hours)")
-	ctx3, cancel3 := context.WithTimeout(context.Background(), 4*time.Hour)
-	defer cancel3()
-
-	if err := s.schoolDetailService.ScrapeAndStoreDetails(ctx3); err != nil {
-		s.logger.Error("school details scrape failed", slog.String("error", err.Error()))
-	} else {
-		s.logger.Info("school details scrape completed")
-	}
+	s.logger.Warn("school details scraping is disabled")
 
 	duration := time.Since(startTime)
 	s.logger.Info("full data refresh cycle completed",
